@@ -22,43 +22,58 @@ def reseta():
     database['INTERESSES'] = {}
 
 
+def criar_perfil(nome, idade, genero, interesses):
+    perfil = {
+        "nome": nome,
+        "idade": idade,
+        "genero": genero,
+        "interesses": interesses
+    }
+    return perfil
+
+
+def combinar_interesses(interesses1, interesses2):
+    interesses_combinados = interesses1 + interesses2
+    interesses_combinados.sort()
+    return interesses_combinados
+
+
 def todas_as_pessoas():
     return database['PESSOAS']
 
-
-def localiza_pessoa(id_pessoa): 
-    raise NotFoundError
+def localiza_pessoa(id_pessoa):
+    for pessoa in database['PESSOAS']:
+        if pessoa['id'] == id_pessoa:
+            return pessoa
+    
+    raise NotFoundError(f"Pessoa com id {id_pessoa} não encontrada")
 
 
 def adiciona_pessoa(dic_pessoa):
     database['PESSOAS'].append(dic_pessoa)
-    database['INTERESSES'][dic_pessoa['id']] = []
+    database['INTERESSES'][dic_pessoa.get('id', None)] = []
                                      
 
 def adiciona_interesse(id_interessado, id_alvo_de_interesse):
-    if not database['PESSOAS'].get(id_interessado):
+    if not any(p['id'] == id_interessado for p in database['PESSOAS']):
         raise NotFoundError(f"Não foi possível encontrar a pessoa com id {id_interessado}")
-    if not database['PESSOAS'].get(id_alvo_de_interesse):
+    if not any(p['id'] == id_alvo_de_interesse for p in database['PESSOAS']):
         raise NotFoundError(f"Não foi possível encontrar a pessoa com id {id_alvo_de_interesse}")
         
-    if id_alvo_de_interesse in database['INTERESSES'].get(id_interessado, []):
-        return
-        
-    database['INTERESSES'][id_interessado].append(id_alvo_de_interesse)
-
+    interesses = database['INTERESSES'].get(id_interessado, [])
+    if id_alvo_de_interesse not in interesses:
+        interesses.append(id_alvo_de_interesse)
+        database['INTERESSES'][id_interessado] = interesses
 
 def consulta_interesses(id_interessado):
     try:
-        pessoa = [p for p in database['PESSOAS'] if p['id'] == id_interessado][0]
-    except IndexError:
-        raise NotFoundError('Pessoa não encontrada na lista')
+        interesses = database['INTERESSES'][id_interessado]
+    except KeyError:
+        raise NotFoundError(f"Pessoa com id {id_interessado} não encontrada")
     
-    lista_interesses = []
-    for interesse in database['INTERESSES']:
-        if interesse == id_interessado:
-            lista_interesses.extend(database['INTERESSES'][interesse])
+    return interesses
     
-    return lista_interesses
+
 
 
 def remove_interesse(id_interessado, id_alvo_de_interesse):
